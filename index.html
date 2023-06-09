@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>WebStudio | Web Recording Studio</title>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #202020;
+                --fg: #e6e6e6;
+                --shadow: #505050;
+            }
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: white;
+                --fg: black;
+                --shadow: lightgray;
+            }
+        }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--bg);
+            color: var(--fg);
+        }
+        #mainScreen {
+            width: 1280px;
+            aspect-ratio: 16/9;
+            border: 1px solid var(--fg);
+        }
+        #videoout {
+            aspect-ratio: 16/9;
+            border: 1px solid var(--fg);
+        }
+        .toolbar {
+            width: calc(100% - 20px);
+            height: 75px;
+            /* box-shadow: rgb(85, 85, 124) 0px 2px 04px 02px; */
+            box-shadow: var(--shadow) 0px 2px 04px 02px;
+            /* background-color: rgb(0, 0, 121); */
+            border-radius: 5px;
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 5px;
+            left: 5px;
+            margin: 5px;
+            display: flex; 
+            align-items: center;
+            z-index: 10;
+        }
+        select {
+            height: 30px;
+            min-width: 100px;
+            border-radius: 5px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow) 0px 2px 04px 02px;
+            border: none;
+            outline: none;
+            margin-left: 5px;
+            background-color: var(--bg);
+            color: var(--fg);
+        }
+        label {
+            margin-left: 10px;
+            color: var(--fg);
+        }
+        button {
+            height: 30px;
+            min-width: 100px;
+            border-radius: 5px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow) 0px 2px 04px 02px;
+            background-color: var(--bg);
+            border: none;
+            outline: none;
+            margin-left: 5px;
+            cursor: pointer;
+            transition-duration: 0.2s;
+            color: var(--fg);
+        }
+        button:hover {
+            background-color: var(--shadow);
+        }
+        button:active {
+            box-shadow: none;
+            transform: translateY(4px);
+        }
+        #messageWindow {
+            position: fixed;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(5px);
+            z-index: 11;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0,0,0, 0.1);
+            transition-duration: 0.5s;
+            opacity: 1;
+        }
+        .messageBox {
+            min-width: 400px;
+            max-width: 800px;
+            min-height: 300px;
+            background-color: var(--bg);
+            z-index: 12;
+            border-radius: 10px;
+            box-shadow: var(--shadow) 0px 2px 04px 02px;
+        }
+        .pagechanger {
+            display: flex;
+            justify-content: center;
+            justify-self: center;
+            width: fit-content;
+            border: 1px var(--shadow) solid;
+            border-radius: 5px;
+        }
+        #fakedraw {
+            position: absolute;
+            left: 0px;
+            height: 30px;
+            min-width: 100px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-image: linear-gradient(90deg, #e000a8, #ff0095);
+            color: var(--bg);
+            transition-duration: 0.2s;
+        }
+        @keyframes fadeslidein {
+            from {
+                transform: translateY(-20px);
+            }
+            to {
+                transform: translateY(0px);
+            }
+        }
+        @keyframes fadeslideout {
+            from {
+                transform: translateY(0px);
+            }
+            to {
+                transform: translateY(-20px);
+            }
+        }
+    </style>
+    <style>
+        #ScreenShareButton {
+            /* background-color: white; */
+        }
+        #ScreenShareCheckbox:checked ~ #ScreenShareButton {
+            background-color: #31beff;
+        }
+        #RecordingButton {
+            background-color: lime;
+        }
+        #RecordingCheckbox:checked ~ #RecordingButton {
+            background-color: red;
+        }
+        #PauseRecordingButton {
+            /* background-color: lime; */
+        }
+        #PauseRecordingCheckbox:checked ~ #PauseRecordingButton {
+            background-color: rgb(255, 217, 0);
+        }
+    </style>
+    <style>
+        /* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22.6px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--shadow);
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: var(--bg);
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(16px);
+  -ms-transform: translateX(16px);
+  transform: translateX(16px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+    </style>
+</head>
+<body>
+    <script>
+        var resolution = {width: 1280, height: 720};
+    </script>
+    <div class="toolbar">
+        <label>
+            Video Input: 
+            <select id="videoin" disabled onchange="restartStream()">
+                <option value="" disabled selected>Select a Video Device</option>
+            </select>
+        </label>
+        <button onclick="openAdvancedMenu()">Advanced</button>
+        <label>
+            Audio Input: 
+            <select id="audioin" disabled onchange="restartStream()">
+                <option value="" disabled selected>Select an Audio Input</option>
+            </select>
+        </label>
+        <input type="checkbox" id="ScreenShareCheckbox" hidden>
+        <button onclick="document.getElementById('ScreenShareCheckbox').click(); restartStream();" id="ScreenShareButton">Share Screen</button>
+
+        <input type="checkbox" id="RecordingCheckbox" hidden>
+        <button onclick="document.getElementById('RecordingCheckbox').click(); if(document.getElementById('RecordingCheckbox').checked) {this.innerHTML = 'Stop Recording'} else {this.innerHTML = 'Start Recording'} startRecording();" id="RecordingButton">Start Recording</button>
+
+        <input type="checkbox" id="PauseRecordingCheckbox" hidden>
+        <button onclick="document.getElementById('PauseRecordingCheckbox').click(); if(document.getElementById('PauseRecordingCheckbox').checked) {this.innerHTML = 'Resume Recording'} else {this.innerHTML = 'Pause Recording'} pauseRecording();" id="PauseRecordingButton">Pause Recording</button>
+    </div>
+    <div id="messageWindow" style="display: none;" onkeyup='dismissMessage(event)'>
+        <div id="messageBox" class="messageBox" style="display: none;">
+            <h3 style="text-align: center;">Advanced</h3>
+            <div style="display: flex; justify-content: center;"><p>message</p></div>
+            <div style="display: flex; justify-content: center; align-items: end; margin-bottom: 10px;"><button>Dismiss</button></div>
+        </div>
+        <div id="advancedBox" class="messageBox" style="display: none;">
+            <h3 style="text-align: center;">Advanced</h3>
+            <div style="display: flex; justify-content: center;">
+                <div class="pagechanger">
+                    <button style="margin: 0px;" value="video" id="selected" onclick="changeslider(this)">Video</button>
+                    <button style="margin: 0px;" value="audio" onclick="changeslider(this)">Audio</button>
+                    <!-- <button style="margin: 0px;" value="encoding" onclick="changeslider(this)">Encoding</button> -->
+                    <button style="margin: 0px;" id="fakedraw">Video</button>
+                </div>
+            </div>
+            <script>
+                document.getElementById("fakedraw").style.left = document.getElementById("selected").offsetLeft-6 + "px";
+                function changeslider(el) {
+                    document.getElementById("fakedraw").innerHTML = el.innerHTML;
+                    document.getElementById("selected").id = "";
+                    el.id = "selected";
+                    if(document.getElementById("selected").value == "video") {
+                        document.getElementById("page1").hidden = false;
+                        document.getElementById("page2").hidden = true;
+                        document.getElementById("page3").hidden = true;
+                    }
+                    else if(document.getElementById("selected").value == "audio") {
+                        document.getElementById("page1").hidden = true;
+                        document.getElementById("page2").hidden = false;
+                        document.getElementById("page3").hidden = true;
+                    }
+                    else if(document.getElementById("selected").value == "encoding") {
+                        document.getElementById("page1").hidden = true;
+                        document.getElementById("page2").hidden = true;
+                        document.getElementById("page3").hidden = false;
+                    }
+                    document.getElementById("fakedraw").style.left = el.offsetLeft + "px";
+                }
+            </script>
+            <fieldset style="margin-top: -15px; margin-left: 20px; margin-right: 20px; margin-bottom: 20px; padding-top: 30px; padding-bottom: 20px;">
+                <div id="page1">
+                    <div style="display: flex; justify-content: center;">
+                        <table cellpadding="5">
+                            <tr>
+                                <td>Resolution: </td>
+                                <td>
+                                    <select id="videores" onchange="changeResolution()">
+                                        <option value="4K">4K</option>
+                                        <option value="1440p">1440p</option>
+                                        <option value="1080p">1080p</option>
+                                        <option value="720p" selected>720p</option>
+                                        <option value="480p">480p</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Frame Rate: </td>
+                                <td>
+                                    <select id="videofps" onchange="modifyConstraints('video', 'frameRate', this.value, 'int')">
+                                        <option value="480">480 FPS</option>
+                                        <option value="360">360 FPS</option>
+                                        <option value="240">240 FPS</option>
+                                        <option value="120">120 FPS</option>
+                                        <option value="60">60 FPS</option>
+                                        <option value="30" selected>30 FPS</option>
+                                        <option value="24">24 FPS</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <!-- <tr>
+                                <td>Mirror Video</td>
+                                <td>
+                                    <label class="switch">
+                                        <input type="checkbox" disabled>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </td>
+                            </tr> -->
+                            <tr>
+                                <td>Brightness: </td>
+                                <td>
+                                    <input type="range" min="-100" value="0" max="100" onchange="modifyConstraints('video', 'brightness', this.value, 'int'); this.title = this.value;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Contrast: </td>
+                                <td>
+                                    <input type="range" min="-100" value="0" max="100" onchange="modifyConstraints('video', 'contrast', this.value, 'int'); this.title = this.value;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sharpness: </td>
+                                <td>
+                                    <input type="range" min="0" value="80" max="100" onchange="modifyConstraints('video', 'sharpness', this.value, 'int'); this.title = this.value;">
+                                </td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </div>
+                <div id="page2" hidden>
+                    <div style="display: flex; justify-content: center;">
+                        <table cellpadding="5">
+                            <tr>
+                                <td>Automatic Gain Control: </td>
+                                <td>
+                                    <label class="switch">
+                                        <input type="checkbox" checked onchange="modifyConstraints('audio', 'autoGainControl', this.checked, 'bool')">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Channel Count: </td>
+                                <td>
+                                    <input type="range" min="1" value="2" max="11" onchange="modifyConstraints('audio', 'channelCount', this.value, 'int'); this.title = this.value;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sample Rate: </td>
+                                <td>
+                                    <input type="range" min="0" value="0" max="4" step="1" id="sampleRateInput" onchange="modifyConstraints('audio', 'channelCount', this.title, 'int');">
+                                    <script>
+                                        const values = [44100, 48000, 88200, 96000, 192000];
+
+                                        const input = document.getElementById('sampleRateInput');
+
+                                        input.oninput = function() {
+                                            input.title = values[this.value];
+                                        };
+
+                                        // set the default value
+                                        input.oninput();
+                                    </script>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Remove Echo: </td>
+                                <td>
+                                    <label class="switch">
+                                        <input type="checkbox" checked onchange="modifyConstraints('audio', 'echoCancellation', this.checked, 'bool')">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Background Noise Cancelling: </td>
+                                <td>
+                                    <label class="switch">
+                                        <input type="checkbox" onchange="modifyConstraints('audio', 'noiseSuppression', this.checked, 'bool')">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </div>
+                <div id="page3" hidden>
+                    <div style="display: flex; justify-content: center;">
+                        
+                    </div>
+                </div>
+            </fieldset>
+            <div style="display: flex; justify-content: center; align-items: end; margin-bottom: 10px;"><button id="closeAdvanced">Close</button></div>
+        </div>
+    </div>
+    <div style="height: 100%; width: 100%; margin-top: 100px; display: flex; justify-content: center; align-items: center;">
+        <video id="videoout" autoplay style="width: 80%;"></video>
+        <canvas id="mainScreen" hidden></canvas>
+    </div>
+    <script>
+        function dismissMessage(e) {
+            if(e.key == "Escape") {
+                if(document.getElementById("messageBox").style.display == "" || document.getElementById("messageBox").style.display == "block") {
+                    document.getElementById("messageBox").style.animation = "fadeslideout 0.2s forwards linear";
+                    document.getElementById("messageBox").parentElement.style.opacity = 0;
+                    setTimeout(function() {
+                        document.getElementById("messageBox").parentElement.style.display = "none";
+                        document.getElementById("messageBox").style.display = "none";
+                    }, 200);
+                }
+                else {
+                    document.getElementById("advancedBox").style.animation = "fadeslideout 0.2s forwards linear";
+                    document.getElementById("advancedBox").parentElement.style.opacity = 0;
+                    setTimeout(function() {
+                        document.getElementById("advancedBox").parentElement.style.display = "none";
+                        document.getElementById("advancedBox").style.display = "none";
+                    }, 200);
+                }
+            }
+        }
+        function messageAlert(title, message, button = "Ok", callback = function() {}) {
+            var messageBox = document.getElementById("messageBox");
+            messageBox.children[0].innerHTML = title;
+            messageBox.children[1].children[0].innerHTML = message;
+            messageBox.children[2].children[0].innerHTML = button;
+            messageBox.children[2].children[0].onclick = function() {
+                callback();
+                this.parentElement.parentElement.style.animation = "fadeslideout 0.2s forwards linear";
+                this.parentElement.parentElement.parentElement.style.opacity = 0;
+                setTimeout(function() {
+                    document.getElementById("messageBox").parentElement.style.display = "none";
+                    document.getElementById("messageBox").style.display = "none";
+                }, 200);
+            };
+            messageBox.parentElement.style.display = "flex";
+            messageBox.style.display = "";
+            setTimeout(function() {
+                messageBox.parentElement.style.opacity = 1;
+            }, 10);
+            messageBox.style.animation = "fadeslidein 0.2s forwards linear";
+        }
+        function openAdvancedMenu() {
+            var advancedBox = document.getElementById("advancedBox");
+            document.getElementById("closeAdvanced").onclick = function() {
+                this.parentElement.parentElement.style.animation = "fadeslideout 0.2s forwards linear";
+                this.parentElement.parentElement.parentElement.style.opacity = 0;
+                setTimeout(function() {
+                    document.getElementById("advancedBox").parentElement.style.display = "none";
+                    document.getElementById("advancedBox").style.display = "none";
+                }, 200);
+            };
+            advancedBox.parentElement.style.display = "flex";
+            advancedBox.style.display = "";
+            setTimeout(function() {
+                advancedBox.parentElement.style.opacity = 1;
+                document.getElementById("fakedraw").style.left = document.getElementById("selected").offsetLeft + "px";
+            }, 10);
+            advancedBox.style.animation = "fadeslidein 0.2s forwards linear";
+        }
+        navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(stream => {
+            navigator.mediaDevices.enumerateDevices().then(devices => {
+                devices.forEach(device => {
+                    console.log(device);
+                    var option = document.createElement("option");
+                    option.value = device.deviceId;
+                    option.innerText = device.label;
+                    if(device.kind == "audioinput") {
+                        document.getElementById("audioin").appendChild(option);
+                    }
+                    else if(device.kind == "videoinput") {
+                        document.getElementById("videoin").appendChild(option);
+                    }
+                });
+                document.getElementById("audioin").disabled = false;
+                document.getElementById("videoin").disabled = false;
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                });
+            });
+        });
+        function changeResolution() {
+            if(document.getElementById("videores").value == "4K") {
+                resolution.width = 3840;
+                resolution.height = 2160;
+            }
+            else if(document.getElementById("videores").value == "1440p") {
+                resolution.width = 2560;
+                resolution.height = 1440;
+            }
+            else if(document.getElementById("videores").value == "1080p") {
+                resolution.width = 1920;
+                resolution.height = 1080;
+            }
+            else if(document.getElementById("videores").value == "720p") {
+                resolution.width = 1280;
+                resolution.height = 720;
+            }
+            else if(document.getElementById("videores").value == "480p") {
+                resolution.width = 854;
+                resolution.height = 480;
+            }
+            restartStream();
+        }
+        var constraints = {audio: {deviceId: document.getElementById("audioin").value}, video: {deviceId: document.getElementById("videoin").value, width: {exact: resolution.width}, height: {exact: resolution.height}}};
+        function modifyConstraints(root, key, value, type) {
+            if(type == "string") {
+                constraints[root][key] = toString(value);
+            }
+            else if(type == "int") {
+                constraints[root][key] = parseInt(value);
+            }
+            else if(type == "float") {
+                constraints[root][key] = parseFloat(value);
+            }
+            else if(type == "bool") {
+                constraints[root][key] = value == "true"? true: false;
+            }
+            else {
+                constraints[root][key] = value;
+            }
+            restartStream();
+        }
+        function updateValues() {
+            constraints["audio"]["deviceId"] = document.getElementById("audioin").value;
+            constraints["video"]["deviceId"] = document.getElementById("videoin").value;
+            if(!document.getElementById("ScreenShareCheckbox").checked) {
+                constraints["video"]["height"]["exact"] = resolution.height;
+                constraints["video"]["width"]["exact"] = resolution.width;
+            }
+            else {
+                constraints["video"]["height"] = resolution.height;
+                constraints["video"]["width"] = resolution.width;
+            }
+            constraints["video"]["frameRate"] = parseInt(document.getElementById("videofps").value);
+        }
+        var canvas = document.getElementById("mainScreen");
+        var ctx = canvas.getContext("2d");
+        var mainLoop;
+        var mainStream = new MediaStream();
+        var mediaRecorder = new MediaRecorder(mainStream, constraints);
+        function restartStream() {
+            if(mainStream != null) {
+                mainStream.getTracks().forEach(track => {
+                    track.stop();
+                });
+            }
+            if(!document.getElementById("ScreenShareCheckbox").checked) {
+                updateValues();
+                navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+                    mainStream = stream;
+                    mediaRecorder = new MediaRecorder(stream, constraints);
+                    document.getElementById("videoout").srcObject = stream;
+                }, error => {
+                    if(error == "OverconstrainedError") {
+                        messageAlert("Error Occurred", "There are no video input devices that support the selected resolution", "Ok");
+                    }
+                    else {
+                        messageAlert("Unexpected Error Occurred", error, "Ok");
+                    }
+                });
+            }
+            else {
+                constraints["video"]["deviceId"] = undefined;
+                updateValues();
+                navigator.mediaDevices.getDisplayMedia(constraints).then(stream => {
+                    mainStream = stream;
+                    mediaRecorder = new MediaRecorder(stream, constraints);
+                    document.getElementById("videoout").srcObject = stream;
+                }, error => {
+                    if(error == "OverconstrainedError") {
+                        messageAlert("Error", "There are no video input devices that support the selected resolution", "Ok");
+                    }
+                    else {
+                        messageAlert("Unexpected Error Occurred", error, "Ok");
+                    }
+                });
+            }
+        }
+        function drawCanvas() {
+            ctx.drawImage(document.getElementById("videoout"), 0, 0, canvas.width, canvas.height);
+        }
+        setInterval(drawCanvas, 1);
+
+        var recording = false;
+        let chunks = [];
+
+        function startRecording() {
+            console.log("Recording");
+            if(!recording) {
+                document.getElementById("videoin").disabled = true;
+                document.getElementById("audioin").disabled = true;
+                document.getElementById("videores").disabled = true;
+                mediaRecorder.ondataavailable = (e) => {
+                    chunks.push(e.data);
+                };
+                mediaRecorder.start();
+            }
+            else {
+                mediaRecorder.onstop = (e) => {
+                    console.log("media recorder stopped");
+                    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                    console.log(blob);
+                    chunks = [];
+                    const videoURL = window.URL.createObjectURL(blob);
+                    messageAlert("Preview", "<video id='viddownload' style='height: 320px;' src=" + videoURL + " controls></video>", "Download", function() {
+                        console.log("event fired");
+                        var a = document.createElement("a");
+                        a.href = document.getElementById("viddownload").src;
+                        a.download = "Capture.mkv";
+                        a.click();
+                    });
+                };
+                mediaRecorder.stop();
+                document.getElementById("videoin").disabled = false;
+                document.getElementById("audioin").disabled = false;
+                document.getElementById("videores").disabled = false;
+            }
+            recording = !recording;
+        }
+        function pauseRecording() {
+            if(mediaRecorder.state == "recording") {
+                mediaRecorder.pause();
+            }
+            else {
+                mediaRecorder.resume();
+            }
+        }
+    </script>
+    <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyDcHmicZFVvmhhghHdTxgaqK7a6w2_sQAc",
+    authDomain: "regal-framework-311504.firebaseapp.com",
+    databaseURL: "https://regal-framework-311504-default-rtdb.firebaseio.com",
+    projectId: "regal-framework-311504",
+    storageBucket: "regal-framework-311504.appspot.com",
+    messagingSenderId: "556754125179",
+    appId: "1:556754125179:web:5b7b700058063ef49dfdde",
+    measurementId: "G-MLSSY73DEK"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+</body>
+</html>
