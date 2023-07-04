@@ -64,6 +64,21 @@
             margin-left: 10px;
             color: var(--fg);
         }
+        input[type="text"], input[type="number"] {
+            height: 30px;
+            min-width: 100px;
+            border-radius: 5px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow) 0px 2px 04px 02px;
+            background-color: var(--bg);
+            border: none;
+            outline: none;
+            margin-left: 5px;
+            cursor: text;
+            transition-duration: 0.2s;
+            color: var(--fg);
+            padding: 5px;
+        }
         button {
             height: 30px;
             min-width: 100px;
@@ -270,7 +285,7 @@ input:checked + .slider:before {
                 <div class="pagechanger">
                     <button style="margin: 0px;" value="video" id="selected" onclick="changeslider(this)">Video</button>
                     <button style="margin: 0px;" value="audio" onclick="changeslider(this)">Audio</button>
-                    <!-- <button style="margin: 0px;" value="encoding" onclick="changeslider(this)">Encoding</button> -->
+                    <button style="margin: 0px;" value="encoding" onclick="changeslider(this)">Encoding</button>
                     <button style="margin: 0px;" id="fakedraw">Video</button>
                 </div>
             </div>
@@ -380,7 +395,7 @@ input:checked + .slider:before {
                             <tr>
                                 <td>Sample Rate: </td>
                                 <td>
-                                    <input type="range" min="0" value="0" max="4" step="1" id="sampleRateInput" onchange="modifyConstraints('audio', 'channelCount', this.title, 'int');">
+                                    <input type="range" min="0" value="0" max="4" step="1" id="sampleRateInput" onchange="modifyConstraints('audio', 'sampleRate', this.title, 'int');">
                                     <script>
                                         const values = [44100, 48000, 88200, 96000, 192000];
 
@@ -419,7 +434,26 @@ input:checked + .slider:before {
                 </div>
                 <div id="page3" hidden>
                     <div style="display: flex; justify-content: center;">
-                        
+                        <table cellpadding="5">
+                            <tr>
+                                <td>Video Bitrate: </td>
+                                <td>
+                                    <input type="number" value="100000" onkeyup="if(event.key == 'Enter') {modifyEncoderOptions('videoBitsPerSecond', this.value, 'int')}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Audio Bitrate: </td>
+                                <td>
+                                    <input type="number" value="100000" onkeyup="if(event.key == 'Enter') {modifyEncoderOptions('audioBitsPerSecond', this.value, 'int')}">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Mime Type: </td>
+                                <td>
+                                    <input type="text" value="video/webm" onkeyup="if(event.key == 'Enter') {modifyEncoderOptions('mimeType', this.value, 'string')}">
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </fieldset>
@@ -534,7 +568,8 @@ input:checked + .slider:before {
             }
             restartStream();
         }
-        var constraints = {audio: {deviceId: document.getElementById("audioin").value}, video: {deviceId: document.getElementById("videoin").value, width: {exact: resolution.width}, height: {exact: resolution.height}}};
+        var constraints = {audio: {deviceId: document.getElementById("audioin").value, autoGainControl: true, channelCount: 2, echoCancellation: false, sampleRate: 44100, noiseSuppression: false}, video: {deviceId: document.getElementById("videoin").value, width: {exact: resolution.width}, height: {exact: resolution.height}}};
+        var encoderOptions = {videoBitsPerSecond: 100000, audioBitsPerSecond: 100000, mimeType: "video/webm"};
         function modifyConstraints(root, key, value, type) {
             if(type == "string") {
                 constraints[root][key] = toString(value);
@@ -550,6 +585,24 @@ input:checked + .slider:before {
             }
             else {
                 constraints[root][key] = value;
+            }
+            restartStream();
+        }
+        function modifyEncoderOptions(key, value, type) {
+            if(type == "string") {
+                encoderOptions[key] = toString(value);
+            }
+            else if(type == "int") {
+                encoderOptions[key] = parseInt(value);
+            }
+            else if(type == "float") {
+                encoderOptions[key] = parseFloat(value);
+            }
+            else if(type == "bool") {
+                encoderOptions[key] = value == "true"? true: false;
+            }
+            else {
+                encoderOptions[key] = value;
             }
             restartStream();
         }
@@ -570,7 +623,7 @@ input:checked + .slider:before {
         var ctx = canvas.getContext("2d");
         var mainLoop;
         var mainStream = new MediaStream();
-        var mediaRecorder = new MediaRecorder(mainStream, constraints);
+        var mediaRecorder = new MediaRecorder(mainStream, encoderOptions);
         function restartStream() {
             if(mainStream != null) {
                 mainStream.getTracks().forEach(track => {
@@ -581,7 +634,7 @@ input:checked + .slider:before {
                 updateValues();
                 navigator.mediaDevices.getUserMedia(constraints).then(stream => {
                     mainStream = stream;
-                    mediaRecorder = new MediaRecorder(stream, constraints);
+                    mediaRecorder = new MediaRecorder(stream, encoderOptions);
                     document.getElementById("videoout").srcObject = stream;
                 }, error => {
                     if(error == "OverconstrainedError") {
@@ -597,7 +650,7 @@ input:checked + .slider:before {
                 updateValues();
                 navigator.mediaDevices.getDisplayMedia(constraints).then(stream => {
                     mainStream = stream;
-                    mediaRecorder = new MediaRecorder(stream, constraints);
+                    mediaRecorder = new MediaRecorder(stream, encoderOptions);
                     document.getElementById("videoout").srcObject = stream;
                 }, error => {
                     if(error == "OverconstrainedError") {
@@ -612,7 +665,7 @@ input:checked + .slider:before {
         function drawCanvas() {
             ctx.drawImage(document.getElementById("videoout"), 0, 0, canvas.width, canvas.height);
         }
-        setInterval(drawCanvas, 1);
+        // setInterval(drawCanvas, 1);
 
         var recording = false;
         let chunks = [];
